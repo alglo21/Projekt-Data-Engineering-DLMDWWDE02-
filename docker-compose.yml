@@ -1,0 +1,75 @@
+
+version: '3.8'
+
+services:
+ 
+  autohaus_data_generate:
+    build:
+      context: .
+      dockerfile: Docker-generate
+    volumes:
+      - data-volume:/app/csv_data
+
+
+  mysql_db:
+    image: mysql:8.0
+    restart: on-failure
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: autohaus_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: rootpassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql 
+
+  import:
+    build:
+      context: .
+      dockerfile: Docker-import
+    depends_on:
+      - autohaus_data_generate 
+      - mysql_db
+    environment:   
+      DB_HOST: mysql_db
+      DB_USER: user
+      DB_PASSWORD: rootpassword
+      DB_NAME: autohaus_db
+    volumes:
+      - data-volume:/app/csv_data 
+
+
+  aggregate:
+    build:
+      context: .
+      dockerfile: Docker-spark
+    depends_on:
+      - import
+    environment:
+      DB_HOST: mysql_db
+      DB_USER: user
+      DB_PASSWORD: rootpassword
+      DB_NAME: autohaus_db
+    volumes:
+      - data-volume:/app/csv_data
+
+
+  visualize:
+    build:
+      context: .
+      dockerfile: Docker-visualize
+    depends_on:
+      - aggregate
+    environment:
+      DB_HOST: mysql_db
+      DB_USER: user
+      DB_PASSWORD: rootpassword
+      DB_NAME: autohaus_db
+    volumes:
+      - data-volume:/app/csv_data
+
+volumes:
+  mysql-data:   
+  data-volume:  
