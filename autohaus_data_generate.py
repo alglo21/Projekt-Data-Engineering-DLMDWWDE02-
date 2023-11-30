@@ -1,21 +1,20 @@
 
 import csv
-import random
 import datetime
+import random
 import os
 
 
 
 autohaus_anzahl = 5  
-tage = 91   
+autoverkaeufer_pro_autohaus = 5  
 modell_anzahl = 20    
-autoverkaeufer_pro_autohaus = 5   
+tage = 91   
 datensatz_gesamt = 1000000  
 
 volume_csv_directory = '/app/csv_data'
-desktop_directory = '/app/csv_data_desktop'
 os.makedirs(volume_csv_directory, exist_ok=True)
-os.makedirs(desktop_directory, exist_ok=True)
+
 
 def random_modellnummer():
   
@@ -70,12 +69,7 @@ for i, autohaus in enumerate(autohaeuser):
                     writer.writerow(datensatz)
 
            
-            with open(os.path.join(desktop_directory, datei_name), mode='a', newline='') as datei:
-                writer = csv.writer(datei)
-                if i == 0:  
-                    writer.writerow(["Autohaus", "Datum", "Uhrzeit", "Modell", "Umsatz", "Autoverkäufer-ID"])
-                for datensatz in autohaus_datensaetze:
-                    writer.writerow(datensatz)
+            
         except Exception as e:
             print(f"Fehler: Datei kann nicht geschrieben werden {datei_name}: {e}")
 

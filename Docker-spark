@@ -1,0 +1,25 @@
+
+FROM jupyter/pyspark-notebook
+
+USER root
+
+RUN apt-get update && apt-get upgrade -y
+
+RUN apt-get update -y && apt-get upgrade -y && apt-get install -y netcat-traditional dos2unix
+RUN apt-get install -y mysql-client unzip
+
+RUN wget https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.26.zip -O /tmp/mysql-connector-java.zip && \
+    unzip /tmp/mysql-connector-java.zip -d /tmp && \
+    cp /tmp/mysql-connector-java-8.0.26/mysql-connector-java-8.0.26.jar $SPARK_HOME/jars/
+
+RUN pip3 install mysql-connector-python
+
+
+COPY import_buffer.sh /app/import_buffer.sh
+COPY aggregate.py /app/aggregate.py
+
+RUN dos2unix /app/import_buffer.sh
+
+
+RUN chmod +x /app/import_buffer.sh
+CMD ["/app/import_buffer.sh", "spark-submit", "/app/aggregate.py"]

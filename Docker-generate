@@ -1,0 +1,8 @@
+
+FROM python:3.9
+
+WORKDIR /app
+
+COPY autohaus_data_generate.py /app/
+
+CMD while true; do python3 autohaus_data_generate.py; sleep 7776000; done
