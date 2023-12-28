@@ -1,19 +1,25 @@
+#Service importiert die Datensätze in die Datenbank (Python Image 3.9)
 FROM python:3.9-slim
 
+#Verzeichnis
 WORKDIR /app
 
-
+#Skript wird kopiert 
 COPY buffer.sh /app/buffer.sh
 
+#Pakete werden installiert
 RUN apt-get update -y && apt-get upgrade -y && apt-get install -y netcat-traditional dos2unix
 RUN pip install mysql-connector-python
 
+#Konvertierung der Skripte 
 RUN dos2unix /app/buffer.sh
 
+#Python-Skript wird kopiert 
 COPY import.py /app/
 RUN dos2unix /app/import.py
 
-
+#Rechtevergabe 
 RUN chmod +x /app/buffer.sh
 
+#Erst starten, wenn Datenbank erreichbar ist 
 CMD ["/app/buffer.sh", "mysql_db:3306", "--", "python3", "/app/import.py"]

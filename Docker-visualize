@@ -1,18 +1,23 @@
+#Service zur Visualisierung der aggregierten Daten. Abhängigkeit zum Aggregation-Service
+#Pandas wird zur Visualisierung genutzt
 
 FROM python:3.9
 
+#Verzeichnis 
 WORKDIR /app
 
+#Aktuallisierung der Pakete
 RUN apt-get update && apt-get install -y default-mysql-client && rm -rf /var/lib/apt/lists/*
 
+#Installation von Bibliotheken (Pandas)
 RUN apt-get update -y && apt-get upgrade -y && apt-get install -y netcat-traditional dos2unix
 RUN pip install mysql-connector-python pandas matplotlib
 
-
+#Kopiert das Python-Skript zur Visualisierung und das Buffer-Skript 
 COPY aggregate_buffer.sh /app/aggregate_buffer.sh
 COPY visualize.py /app/
 
-
+#Konvertieren der Skripte
 RUN dos2unix /app/aggregate_buffer.sh
 
 CMD ["/app/aggregate_buffer.sh", "python3", "/app/visualize.py"]

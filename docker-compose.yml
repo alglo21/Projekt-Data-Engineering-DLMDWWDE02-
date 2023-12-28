@@ -1,8 +1,9 @@
-
+#Docker Compose Datei zum ausführen aller Services (Version 3.8)
 version: '3.8'
 
 services:
  
+ #Service zur Generierung von Autohaus Datensätzen 
   autohaus_data_generate:
     build:
       context: .
@@ -10,7 +11,7 @@ services:
     volumes:
       - data-volume:/app/csv_data
 
-
+#Service setzt eine SQL-Datenbank auf und setzt User und Passwort
   mysql_db:
     image: mysql:8.0
     restart: on-failure
@@ -25,6 +26,7 @@ services:
       - mysql-data:/var/lib/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql 
 
+#Service importiert die Datensätze in die Datenbank (Abhängigkeit von vorherigen 2 Services)
   import:
     build:
       context: .
@@ -40,7 +42,8 @@ services:
     volumes:
       - data-volume:/app/csv_data 
 
-
+#Service aggregiert die importierten Daten in der Datenbank und ist abhängig vom Import-Service
+#Apache Spark wird zur Aggregierung verwendet 
   aggregate:
     build:
       context: .
@@ -55,7 +58,8 @@ services:
     volumes:
       - data-volume:/app/csv_data
 
-
+#Service zur Visualisierung der aggregierten Daten. Abhängigkeit zum Aggregation-Service
+#Pandas wird zur Visualisierung genutzt
   visualize:
     build:
       context: .
@@ -70,6 +74,7 @@ services:
     volumes:
       - data-volume:/app/csv_data
 
+#Definition des Speicherortes 
 volumes:
   mysql-data:   
-  data-volume:  
+  

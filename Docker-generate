@@ -1,8 +1,11 @@
-
+#Service zur Generierung von Autohaus Datensätzen (Python Image 3.9)
 FROM python:3.9
 
+#Verzeichnis
 WORKDIR /app
 
+#Skript wird in Verzeichnis kopiert 
 COPY autohaus_data_generate.py /app/
 
+#Ausführung je Quartal 
 CMD while true; do python3 autohaus_data_generate.py; sleep 7776000; done

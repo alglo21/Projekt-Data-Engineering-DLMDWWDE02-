@@ -1,15 +1,16 @@
-
+#Service aggregiert die importierten Daten in der Datenbank 
+#Apache Spark wird zur Aggregierung verwendet 
 import mysql.connector
 from pyspark.sql import SparkSession
 from pyspark.sql.window import Window
 from pyspark.sql.functions import month, year, hour, date_format, row_number, desc
 
-
+#Initialisierung von Spark
 spark = SparkSession.builder \
     .appName("Integration") \
     .getOrCreate()
 
-
+#Daten in Spark laden
 df = spark.read \
     .format("jdbc") \
     .option("url", "jdbc:mysql://mysql_db:3306/autohaus_db") \
@@ -20,19 +21,19 @@ df = spark.read \
 
 print("Loading complete")
 
-
+#Berechnung des Umsatzes für die Autohäuser
 mon_umsatz = df.groupBy(month("Datum").alias("Monat"), year("Datum").alias("Jahr"), "Autohaus") \
     .sum("Umsatz") \
     .orderBy("Jahr", "Monat", "Autohaus")
 
-
+#Berechnung der Umsatzes pro Verkäufer
 umsatz_pro_autoverkaeufer = df.groupBy("Autohaus", "Autoverkaeufer_ID").sum("Umsatz")
 
-
+#Berechnung pro Zeiteinheit 
 zeit_umsatz = df.groupBy(hour("Uhrzeit").alias("Stunde"), date_format("Datum", 'E').alias("Wochentag"), "Autohaus") \
     .sum("Umsatz")
 
-
+#Berechnung der umsatzstärksten Modelle 
 windowSpec = Window.partitionBy("Autohaus").orderBy(desc("sum(Umsatz)"))
 top_modells = df.groupBy("Autohaus", "Modell").sum("Umsatz") \
     .withColumn("rank", row_number().over(windowSpec)) \
@@ -43,7 +44,7 @@ top_modells = df.groupBy("Autohaus", "Modell").sum("Umsatz") \
 print("Aggregation complete.")
 
 
-
+#Aggregierte Daten werden zurück in die Tabelle exportiert 
 mon_umsatz.write \
     .format("jdbc") \
     .option("url", "jdbc:mysql://mysql_db:3306/autohaus_db") \
@@ -80,7 +81,7 @@ print("Export complete.")
 
 
 
-
+#Verbindung zur Datenbank wird aufgebaut 
 conn = mysql.connector.connect(
     host='mysql_db',
     user='user',
@@ -89,6 +90,7 @@ conn = mysql.connector.connect(
 )
 cursor = conn.cursor()
 
+#Neue Tabelle für Agg-Status erstellen 
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS a_status (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -96,11 +98,12 @@ CREATE TABLE IF NOT EXISTS a_status (
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )
 """)
-
+#Status "Complete" einfügen 
 cursor.execute("INSERT INTO a_status (status) VALUES ('complete')")
 
 conn.commit()
 cursor.close()
 conn.close()
 
+#Ende des Spark-Services 
 spark.stop()

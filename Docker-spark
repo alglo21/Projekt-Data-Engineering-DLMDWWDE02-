@@ -1,25 +1,30 @@
-
+#Service aggregiert die importierten Daten in der Datenbank 
+#Apache Spark wird zur Aggregierung verwendet 
 FROM jupyter/pyspark-notebook
 
 USER root
 
+#Aktuallisierung der Pakete
 RUN apt-get update && apt-get upgrade -y
 
+#Installation der MySQL
 RUN apt-get update -y && apt-get upgrade -y && apt-get install -y netcat-traditional dos2unix
 RUN apt-get install -y mysql-client unzip
 
+#Installation der MySQL-Treiber und Verbindung 
 RUN wget https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.26.zip -O /tmp/mysql-connector-java.zip && \
     unzip /tmp/mysql-connector-java.zip -d /tmp && \
     cp /tmp/mysql-connector-java-8.0.26/mysql-connector-java-8.0.26.jar $SPARK_HOME/jars/
 
 RUN pip3 install mysql-connector-python
 
-
+#Kopiert das Python-Skript zur Aggregation und das Buffer-Skript 
 COPY import_buffer.sh /app/import_buffer.sh
 COPY aggregate.py /app/aggregate.py
 
+#Konvertieren der Skripte
 RUN dos2unix /app/import_buffer.sh
 
-
+#Rechtevergabe 
 RUN chmod +x /app/import_buffer.sh
 CMD ["/app/import_buffer.sh", "spark-submit", "/app/aggregate.py"]
